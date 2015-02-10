@@ -13,60 +13,64 @@
 import struct
 import xmltodict
 import json
+import sys
 
 
 def SnapGeneFileToJson(fileName):
+	err = sys.stderr
 	s = SnapGeneFileReader()
 	s.openFile(fileName)
 	b = s.readFirstByte()
 	if b!=9:
-		print "nota snapgene file"
+		err.write("not a snapgene file\n")
 	else:
 		s.readDescriptionSegment()
-
-	dct = {}
 
 	try:
 		while s.sgFile:
 			b = s.readFirstByte()
-			if b==0:
+			if b=="":
+				break
+			elif b==0:
 				s.readDnaSegment()
 			elif b==8:
-				print "additional sequence properties seqment"
+				err.write("additional sequence properties seqment\n")
 				s.readAdditionalSequenceProperties()
 			elif b==5:
-				print "primers"
+				err.write("primers\n")
 				s.passThisDataBlock()
 			elif b==6:
-				print "notes"
+				err.write("notes\n")
 				s.passThisDataBlock()
 			elif b==17:
-				print "alignable sequence"
+				err.write("alignable sequence\n")
 				s.passThisDataBlock()
 			elif b==16:
-				print "alignable sequence"
+				err.write("alignable sequence\n")
 				s.passThisDataBlock()
 			elif b==7:
-				print "history tree"
+				err.write("history tree\n")
 				s.passThisDataBlock()
 			elif b==11:
-				print "history node"
+				err.write("history node\n")
 				s.passThisDataBlock()
 			elif b==1:
-				print "compressed DNA"
+				err.write("compressed DNA\n")
 				s.passThisDataBlock()
 			elif b==10:
-				print "features"
-				dct = s.readFeatures()
+				err.write("features\n")
+				s.readFeatures()
 			elif b==18:
-				print "sequence trace"
+				err.write("sequence trace\n")
 				s.passThisDataBlock()
 			else:
-				print b
 				s.passThisDataBlock()
 			
-	except:
-		print "end"
+	except Exception as e: 
+		#err.write(e+"\n")
+		print "=============***++++======="
+		print e
+		print "=============***++++======="
 	return s.data
 
 		
@@ -80,6 +84,8 @@ class SnapGeneFileReader:
 
 	def readFirstByte(self):
 		s = self.sgFile.read(1)
+		if s == "":
+			return s
 		b = ord(s)
 		return b
 		
@@ -92,7 +98,6 @@ class SnapGeneFileReader:
 		self.data["isDNA"] = struct.unpack('>H', self.sgFile.read(2))[0]
 		self.data["exportVersion"] = struct.unpack('>H', self.sgFile.read(2))[0]
 		self.data["importVersion"] = struct.unpack('>H', self.sgFile.read(2))[0]
-		print self.data
 	
 	def readDnaSegment(self):
 		self.data["dna"] = {}
@@ -106,21 +111,59 @@ class SnapGeneFileReader:
 		d["ecoKIMethylated"] = pType & 0x10 >0
 		d["length"] = dataLength - 1
 		d["sequence"] = self.sgFile.read(d["length"])
-		print d
 
 	
 	def readAdditionalSequenceProperties(self):
 		dataLength = struct.unpack('>I', self.sgFile.read(4))[0]
 		data = self.sgFile.read(dataLength)
-		print data
 
 	def readFeatures(self):
 		dataLength = struct.unpack('>I', self.sgFile.read(4))[0]
 		data = self.sgFile.read(dataLength)
 		dct = xmltodict.parse(data)
-		self.data["features"] = dct["Features"]["Feature"]
-		print dct
-		return dct
+		#self.data["features"] = dct["Features"]["Feature"]
+		original = dct["Features"]["Feature"]
+		self.data['features'] = []
+
+		strandDict = {"0":".","1":"+","2":"-","3":"="}
+
+		for f in original:
+			print "-----------"
+			d = {}
+			d['text']=f['@name']
+			directionality = f['@directionality'] if f.has_key('@directionality') else "0" 
+			d['strand']= strandDict[directionality]
+			print d['strand']
+			d['type'] = f['@type']
+			d['segments'] = []
+			if type(f["Segment"]) == type([]):
+				segments = f["Segment"]
+			else:
+				segments = [f["Segment"],]
+			for s in segments:
+				seg = {}
+				r = s["@range"].split('-')
+				seg['start'] = r[0]
+				seg['end'] = r[1]
+				seg['color'] = s['@color']
+				seg['name'] = s['@name'] if s.has_key('@name') else ""
+				d['segments'].append(seg)
+
+			d['qualifiers'] = []
+			if type(f["Q"]) == type([]):
+				qualifiers = f["Q"]
+			else:
+				qualifiers = [f["Q"],]
+			for q in qualifiers:
+				qu = {}
+				qu['name'] = q['@name']
+				qu['value'] = q['V']
+				d['qualifiers'].append(qu)
+
+			self.data['features'].append(d)
+			print "."
+
+
 
 	def passThisDataBlock(self):
 		dataLength = struct.unpack('>I', self.sgFile.read(4))[0]
