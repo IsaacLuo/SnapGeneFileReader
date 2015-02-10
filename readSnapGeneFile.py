@@ -14,6 +14,8 @@ import struct
 import xmltodict
 import json
 import sys
+import os
+import os.path
 
 
 def SnapGeneFileToJson(fileName):
@@ -68,9 +70,12 @@ def SnapGeneFileToJson(fileName):
 			
 	except Exception as e: 
 		#err.write(e+"\n")
-		print "=============***++++======="
-		print e
-		print "=============***++++======="
+		#print "=============***++++======="
+		#print e
+		#print "=============***++++======="
+		err.write(e.message)
+		err.write("\n")
+
 	return s.data
 
 		
@@ -79,7 +84,7 @@ def SnapGeneFileToJson(fileName):
 class SnapGeneFileReader:
 	def openFile(self, fileName):
 		self.sgFile = open(fileName,"rb") 
-		self.data = {}
+		self.data = {"name":os.path.splitext(os.path.basename(fileName))[0]}
 
 
 	def readFirstByte(self):
@@ -110,7 +115,7 @@ class SnapGeneFileReader:
 		d["dcmMethylated"] = pType & 0x08 >0
 		d["ecoKIMethylated"] = pType & 0x10 >0
 		d["length"] = dataLength - 1
-		d["sequence"] = self.sgFile.read(d["length"])
+		self.data["seq"] = self.sgFile.read(d["length"])
 
 	
 	def readAdditionalSequenceProperties(self):
@@ -128,40 +133,56 @@ class SnapGeneFileReader:
 		strandDict = {"0":".","1":"+","2":"-","3":"="}
 
 		for f in original:
-			print "-----------"
 			d = {}
 			d['text']=f['@name']
+			d['textColor']='black'
 			directionality = f['@directionality'] if f.has_key('@directionality') else "0" 
 			d['strand']= strandDict[directionality]
-			print d['strand']
 			d['type'] = f['@type']
 			d['segments'] = []
 			if type(f["Segment"]) == type([]):
 				segments = f["Segment"]
 			else:
 				segments = [f["Segment"],]
+
+			r = segments[0]["@range"].split('-')
+			totalStart = int(r[0])
+			totalEnd = int(r[1])
+
 			for s in segments:
 				seg = {}
 				r = s["@range"].split('-')
-				seg['start'] = r[0]
-				seg['end'] = r[1]
+				seg['start'] = int(r[0])
+				seg['end'] = int(r[1])
+				if r[0]<totalStart:
+					totalStart = seg['start']
+				if r[1]>totalEnd:
+					totalEnd = seg['end'] 
+
 				seg['color'] = s['@color']
 				seg['name'] = s['@name'] if s.has_key('@name') else ""
 				d['segments'].append(seg)
 
+			d['start'] = totalStart
+			d['end'] = totalEnd
+			d['color'] = segments[0]['@color']
+
+			d['row'] = 0
+			d['isORf'] = False
+
 			d['qualifiers'] = []
-			if type(f["Q"]) == type([]):
-				qualifiers = f["Q"]
-			else:
-				qualifiers = [f["Q"],]
-			for q in qualifiers:
-				qu = {}
-				qu['name'] = q['@name']
-				qu['value'] = q['V']
-				d['qualifiers'].append(qu)
+			if f.has_key("Q"):
+				if type(f["Q"]) == type([]):
+					qualifiers = f["Q"]
+				else:
+					qualifiers = [f["Q"],]
+				for q in qualifiers:
+					qu = {}
+					qu['name'] = q['@name']
+					qu['value'] = q['V']
+					d['qualifiers'].append(qu)
 
 			self.data['features'].append(d)
-			print "."
 
 
 
@@ -174,7 +195,10 @@ class SnapGeneFileReader:
 
 
 if __name__ == '__main__':
-	print SnapGeneFileToJson("pIB2-SEC13-mEGFP.dna")
+	if len(sys.argv)>1:
+		print json.dumps(SnapGeneFileToJson(sys.argv[1]))
+	else:
+		print json.dumps(SnapGeneFileToJson("pIB2-SEC13-mEGFP.dna"))
 	
 
 
