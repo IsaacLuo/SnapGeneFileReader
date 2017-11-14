@@ -4,7 +4,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import DNAAlphabet
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 
-from SnapGeneFileReader import SnapGeneFileReader
+from .SnapGeneFileReader import SnapGeneFileReader
 
 def parse_qualifiers(qualifiers_list):
     qualifiers_dict = {}

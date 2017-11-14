@@ -1,4 +1,4 @@
-from snapgene_file_to_seq_record import snapgene_file_to_seq_record
+from SnapGeneFileReader.snapgene_file_to_seq_record import snapgene_file_to_seq_record
 
 from Bio import SeqIO
 
