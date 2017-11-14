@@ -7,7 +7,7 @@ pip install SnapGeneFileReader
 ```
 ## test:
 ```bash
-python runTest.py
+pytest
 ```
 ## usage:
 
