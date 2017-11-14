@@ -12,7 +12,10 @@ def parse_qualifiers(qualifiers_list):
         name = q['name']
         val = q['value']
         for key in val:
-            qualifiers_dict[name] = val[key]
+            try:
+                qualifiers_dict[name] = val[key]
+            except:
+                qualifiers_dict[name] = 'unknown'
             break
     return qualifiers_dict
 
