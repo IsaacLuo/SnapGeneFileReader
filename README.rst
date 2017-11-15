@@ -30,6 +30,6 @@ Test with Pytest:
 Licence = MIT
 -------------
 
-SnapGene Reader is an open-source software originally written by `Isaac Luo <https://github.com/IsaacLuo>`_ at the Edinburgh Genome Foundry and released on Github <https://github.com/Edinburgh-Genome-Foundry/SnapGeneReader>`_ under the MIT licence (¢ Edinburg Genome Foundry).
+SnapGene Reader is an open-source software originally written by `Isaac Luo <https://github.com/IsaacLuo>`_ at the Edinburgh Genome Foundry and released on `Github <https://github.com/Edinburgh-Genome-Foundry/SnapGeneReader>`_ under the MIT licence (¢ Isaac Luo and Cai Lab).
 
 ```
