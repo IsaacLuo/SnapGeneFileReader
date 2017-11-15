@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='SnapGeneFileReader',
-      version='0.1.9',
+      version='0.1.11',
       author='yishaluo',
       author_email='yishaluo@gmail.com',
       description='A Python project to read and write Snapgene *.dna into dict, json, and biopython object.',

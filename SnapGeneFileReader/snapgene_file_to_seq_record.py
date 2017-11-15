@@ -3,8 +3,14 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import DNAAlphabet
 from Bio.SeqFeature import SeqFeature, FeatureLocation
+import html2text
 
 from .SnapGeneFileReader import SnapGeneFileReader
+
+html_parser = html2text.HTML2Text()
+html_parser.ignore_emphasis = True
+html_parser.ignore_links = True
+html_parser.body_width = 0
 
 def parse_qualifiers(qualifiers_list):
     qualifiers_dict = {}
@@ -13,7 +19,7 @@ def parse_qualifiers(qualifiers_list):
         val = q['value']
         for key in val:
             try:
-                qualifiers_dict[name] = val[key]
+                qualifiers_dict[name] = html_parser.handle(val[key])[:-2]
             except:
                 qualifiers_dict[name] = 'unknown'
             break
