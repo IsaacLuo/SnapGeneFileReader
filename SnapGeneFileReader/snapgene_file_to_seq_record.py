@@ -19,8 +19,15 @@ def parse_qualifiers(qualifiers_list):
             break
     return qualifiers_dict
 
-def snapgene_file_to_seq_record(file_name):
-    obj_dict = SnapGeneFileReader().read_file(file_name)
+def snapgene_file_to_seq_record(name, file_object=None):
+    """
+    name: it can be the file name, or just a string if file_object is provided.
+    file_object: it can be an opened file, or io.BytesIO
+    """
+    if file_object:
+        obj_dict = SnapGeneFileReader().read_file(name, file_object=file_object)
+    else:
+        obj_dict = SnapGeneFileReader().read_file(name)
 
     record = SeqRecord(Seq(obj_dict['seq'], DNAAlphabet() ))
 
