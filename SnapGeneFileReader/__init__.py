@@ -1,2 +1,0 @@
-from .SnapGeneFileReader import SnapGeneFileReader
-from .snapgene_file_to_seq_record import snapgene_file_to_seq_record

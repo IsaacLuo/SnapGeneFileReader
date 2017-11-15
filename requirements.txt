@@ -1,4 +1,0 @@
-biopython==1.70
-lxml==3.8.0
-xmltodict==0.11.0
-html2text==2017.10.4
