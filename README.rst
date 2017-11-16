@@ -1,6 +1,10 @@
 SnapGene Reader
 ===============
 
+.. image:: https://travis-ci.org/Edinburgh-Genome-Foundry/SnapGeneReader.svg?branch=master
+   :target: https://travis-ci.org/Edinburgh-Genome-Foundry/SnapGeneReader
+   :alt: Travis CI build status
+
 SnapGene Reader is a Python library to parse Snapgene ``*.dna`` files into dictionnaries or Biopython SeqRecords:
 
 .. code:: python
