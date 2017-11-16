@@ -17,6 +17,15 @@ html_parser.body_width = 0
 def parse(val):
     return html_parser.handle(val).strip() if isinstance(val, str) else val
 
+def parse_dict(obj):
+    if isinstance(obj, dict):
+        for key in obj:
+            if isinstance(obj[key], str):
+                obj[key] = parse(obj[key])
+            elif isinstance(obj[key], dict):
+                parse_dict(obj[key])
+    return obj
+
 def snapgene_file_to_dict(filepath=None, fileobject=None):
     """Return a dictionnary containing the data from a ``*.dna`` file.
 
@@ -53,6 +62,19 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
     while True:
         # READ THE WHOLE FILE, BLOCK BY BLOCK, UNTIL THE END
         next_byte = fileobject.read(1)
+        
+        # next_byte table
+        # 0: dna sequence
+        # 1: compressed DNA
+        # 5: primers
+        # 6: notes
+        # 7: history tree
+        # 8: additional sequence properties segment
+        # 11: history node
+        # 16: alignable sequence
+        # 17: alignable sequence
+        # 18: sequence trace
+
 
         if next_byte == b'':
             # END OF FILE
@@ -73,6 +95,11 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
             )
             data["seq"] = fileobject.read(block_size - 1).decode('ascii')
 
+        elif ord(next_byte) == 6:
+            # READ THE NOTES
+            note_data = parse_dict(xmltodict.parse(fileobject.read(block_size)))
+            data['notes'] = note_data['Notes']
+
         elif ord(next_byte) == 10:
             # READ THE FEATURES
             strand_dict = {"0": ".", "1": "+", "2": "-", "3": "="}
@@ -84,8 +111,8 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
                 if not isinstance(segments, list):
                     segments = [segments]
                 segments_ranges = [
-                   sorted([int(e) for e in segment['@range'].split('-')])
-                   for segment in segments
+                    sorted([int(e) for e in segment['@range'].split('-')])
+                    for segment in segments
                 ]
                 qualifiers = f.get('Q', [])
                 if not isinstance(qualifiers, list):
@@ -134,6 +161,7 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
                     qualifiers=parsed_qualifiers
                 ))
 
+
         else:
             # WE IGNORE THE WHOLE BLOCK
             fileobject.read(block_size)
@@ -148,9 +176,9 @@ def snapgene_file_to_seqrecord(filepath=None, fileobject=None):
     Parameters
     ----------
     filepath
-      Path to a .dna file created with SnapGene
+        Path to a .dna file created with SnapGene
     fileobject
-      On object-like pointing to the data of a .dna file created with SnapGene
+        On object-like pointing to the data of a .dna file created with SnapGene
     """
     data = snapgene_file_to_dict(filepath=filepath, fileobject=fileobject)
     strand_dict = {'+': 1, '-': -1, '.': 0}
@@ -169,5 +197,6 @@ def snapgene_file_to_seqrecord(filepath=None, fileobject=None):
                 qualifiers= feature['qualifiers']
             )
             for feature in data['features']
-        ]
+        ],
+        annotations=dict(data['notes'])
     )
