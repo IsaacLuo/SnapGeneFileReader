@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='snapgene_reader',
-      version='0.1.12',
+      version='0.1.13',
       author='yishaluo',
       author_email='yishaluo@gmail.com',
       description='Convert Snapgene *.dna files dict/json/biopython.',
