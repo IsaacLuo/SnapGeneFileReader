@@ -36,18 +36,6 @@ def parse_dict(obj):
                 parse_dict(obj[key])
     return obj
 
-def gs(dic, *args, **kwargs):
-    if 'default' not in kwargs:
-        kwargs['default'] = None
-
-    d = dic
-    for a in args:
-        if a in d:
-            d = d[a]
-        else:
-            return kwargs['default']
-    return d
-
 def snapgene_file_to_dict(filepath=None, fileobject=None):
     """Return a dictionnary containing the data from a ``*.dna`` file.
 
@@ -84,7 +72,7 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
     while True:
         # READ THE WHOLE FILE, BLOCK BY BLOCK, UNTIL THE END
         next_byte = fileobject.read(1)
-        
+
         # next_byte table
         # 0: dna sequence
         # 1: compressed DNA
@@ -195,9 +183,9 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
         else:
             # WE IGNORE THE WHOLE BLOCK
             # fileobject.read(block_size)
-            # 2: 
+            # 2:
             # 3:
-            
+
             block = fileobject.read(block_size)
             print(ord(next_byte), len(block))
             # data['block_{}'.format(ord(next_byte))] = block
@@ -214,7 +202,8 @@ def snapgene_file_to_seqrecord(filepath=None, fileobject=None):
     filepath
         Path to a .dna file created with SnapGene
     fileobject
-        On object-like pointing to the data of a .dna file created with SnapGene
+        On object-like pointing to the data of a .dna file created with
+        SnapGene
     """
     data = snapgene_file_to_dict(filepath=filepath, fileobject=fileobject)
     strand_dict = {'+': 1, '-': -1, '.': 0}
@@ -237,7 +226,21 @@ def snapgene_file_to_seqrecord(filepath=None, fileobject=None):
         annotations=dict(data['notes'])
     )
 
+
+# TODO: PLEASE CLEAN AND DOCUMENT
+
 def snapgene_file_to_gbk(read_file_object, write_file_object):
+    def gs(dic, *args, **kwargs):
+        if 'default' not in kwargs:
+            kwargs['default'] = None
+
+        d = dic
+        for a in args:
+            if a in d:
+                d = d[a]
+            else:
+                return kwargs['default']
+        return d
     data = snapgene_file_to_dict(fileobject = read_file_object)
     with open('dst.json', 'w') as jf:
         jf.write(json.dumps(data,indent=4))
@@ -250,7 +253,7 @@ def snapgene_file_to_gbk(read_file_object, write_file_object):
     w.write('KEYWORDS    {}\n'.format(gs(data, 'notes','CustomMapLabel', default='.')))
     w.write('SOURCE      .\n')
     w.write('  ORGANISM  .\n')
-    
+
     references = gs(data, 'notes', 'References')
 
     reference_count = 0
@@ -340,7 +343,7 @@ def snapgene_file_to_gbk(read_file_object, write_file_object):
             w.write('"\n')
         else:
             # write colors and direction
-            w.write('                     /note="color: {}'.format(gs(feature, 'color', default='#ffffff')))
+            w.write(21* ' ' + '/note="color: {}'.format(gs(feature, 'color', default='#ffffff')))
             if strand == '-':
                 w.write('; direction: LEFT"\n')
                 # w.write('"\n')
@@ -359,8 +362,3 @@ def snapgene_file_to_gbk(read_file_object, write_file_object):
             w.write(' {}'.format(seq[j:j+10]))
         w.write('\n')
     w.write('//\n')
-
-
-# with open('tests/test_samples/custom.dna', 'rb') as f:
-#     with open('dst.gbk', 'w', encoding='utf-8') as w:
-#         snapgene_file_to_gbk(f, w)
