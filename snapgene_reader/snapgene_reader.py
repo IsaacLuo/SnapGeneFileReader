@@ -78,8 +78,10 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
             strand_dict = {"0": ".", "1": "+", "2": "-", "3": "="}
             format_dict = {'@text': parse, '@int': int}
             features_data = xmltodict.parse(fileobject.read(block_size))
-
-            for f in features_data["Features"]["Feature"]:
+            features = features_data["Features"]["Feature"]
+            if not isinstance(features, list):
+                features = [features]
+            for f in features:
                 segments = f["Segment"]
                 if not isinstance(segments, list):
                     segments = [segments]
