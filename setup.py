@@ -1,3 +1,7 @@
+'''
+setup.py
+install snapgene_reader by pip
+'''
 from setuptools import setup, find_packages
 
 setup(name='snapgene_reader',
@@ -8,5 +12,5 @@ setup(name='snapgene_reader',
       long_description=open('README.rst').read(),
       license='MIT',
       keywords="DNA sequence design format converter",
-      packages= find_packages(),
-      install_requires= ['biopython', 'xmltodict', 'html2text'])
+      packages=find_packages(),
+      install_requires=['biopython', 'xmltodict', 'html2text'])

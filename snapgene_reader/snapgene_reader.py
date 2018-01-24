@@ -1,33 +1,39 @@
+'''
+snapgene reader main file
+'''
 import struct
+import json
 import xmltodict
-import os
 
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import DNAAlphabet
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 import html2text
-import re
 
-import json
+HTML_PARSER = html2text.HTML2Text()
+HTML_PARSER.ignore_emphasis = True
+HTML_PARSER.ignore_links = True
+HTML_PARSER.body_width = 0
+HTML_PARSER.single_line_break = True
 
-
-html_parser = html2text.HTML2Text()
-html_parser.ignore_emphasis = True
-html_parser.ignore_links = True
-html_parser.body_width = 0
-html_parser.single_line_break = True
 
 def parse(val):
-    t = html_parser.handle(val).strip() if isinstance(val, str) else val
-    return t
+    '''
+    parse html
+    '''
+    return HTML_PARSER.handle(val).strip() if isinstance(val, str) else val
 
 # def parse(val):
 #     ss = re.sub(r'<br>', '\n', val)
 #     ss = re.sub(r'<.*?>', '', ss)
 #     return ss
 
+
 def parse_dict(obj):
+    '''
+    parse dict in the obj
+    '''
     if isinstance(obj, dict):
         for key in obj:
             if isinstance(obj[key], str):
@@ -36,15 +42,17 @@ def parse_dict(obj):
                 parse_dict(obj[key])
     return obj
 
+
 def snapgene_file_to_dict(filepath=None, fileobject=None):
     """Return a dictionnary containing the data from a ``*.dna`` file.
 
     Parameters
     ----------
     filepath
-      Path to a .dna file created with SnapGene
+        Path to a .dna file created with SnapGene
     fileobject
-      On object-like pointing to the data of a .dna file created with SnapGene
+        On object-like pointing to the data of a .dna file created with
+        SnapGene
     """
 
     if filepath is not None:
@@ -54,6 +62,7 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
         raise ValueError('Wrong format for a SnapGene file !')
 
     def unpack(size, mode):
+        """unpack the fileobject"""
         return struct.unpack('>' + mode, fileobject.read(size))[0]
 
     # READ THE DOCUMENT PROPERTIES
@@ -125,40 +134,40 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
             features = features_data["Features"]["Feature"]
             if not isinstance(features, list):
                 features = [features]
-            for f in features:
-                segments = f["Segment"]
+            for feature in features:
+                segments = feature["Segment"]
                 if not isinstance(segments, list):
                     segments = [segments]
                 segments_ranges = [
                     sorted([int(e) for e in segment['@range'].split('-')])
                     for segment in segments
                 ]
-                qualifiers = f.get('Q', [])
+                qualifiers = feature.get('Q', [])
                 if not isinstance(qualifiers, list):
                     qualifiers = [qualifiers]
                 parsed_qualifiers = {}
-                for q in qualifiers:
-                    if isinstance(q['V'], list):
-                        if len(q['V'][0].items()) == 1:
-                            parsed_qualifiers[q['@name']] = l = []
-                            for e in q['V']:
-                                fmt, value = e.popitem()
+                for qualifier in qualifiers:
+                    if isinstance(qualifier['V'], list):
+                        if len(qualifier['V'][0].items()) == 1:
+                            parsed_qualifiers[qualifier['@name']] = l_v = []
+                            for e_v in qualifier['V']:
+                                fmt, value = e_v.popitem()
                                 fmt = format_dict.get(fmt, parse)
-                                l.append(fmt(value))
+                                l_v.append(fmt(value))
                         else:
-                            parsed_qualifiers[q['@name']] = d = {}
-                            for e in q['V']:
-                                (fmt1, value1), (fmt2, value2) = e.items()
+                            parsed_qualifiers[qualifier['@name']] = d_v = {}
+                            for e_v in qualifier['V']:
+                                (fmt1, value1), (_, value2) = e_v.items()
                                 fmt = format_dict.get(fmt1, parse)
-                                d[value2] = fmt(value1)
+                                d_v[value2] = fmt(value1)
 
                     else:
-                        fmt, value = q['V'].popitem()
+                        fmt, value = qualifier['V'].popitem()
                         fmt = format_dict.get(fmt, parse)
-                        parsed_qualifiers[q['@name']] = fmt(value)
+                        parsed_qualifiers[qualifier['@name']] = fmt(value)
 
                 if 'label' not in parsed_qualifiers:
-                    parsed_qualifiers['label'] = f['@name']
+                    parsed_qualifiers['label'] = feature['@name']
                 if 'note' not in parsed_qualifiers:
                     parsed_qualifiers['note'] = []
                 if not isinstance(parsed_qualifiers['note'], list):
@@ -169,9 +178,9 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
                 data["features"].append(dict(
                     start=min([start for (start, end) in segments_ranges]),
                     end=max([end for (start, end) in segments_ranges]),
-                    strand=strand_dict[f.get('@directionality', "0")],
-                    type=f['@type'],
-                    name=f['@name'],
+                    strand=strand_dict[feature.get('@directionality', "0")],
+                    type=feature['@type'],
+                    name=feature['@name'],
                     color=segments[0]['@color'],
                     textColor='black',
                     segments=segments,
@@ -193,6 +202,7 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
     fileobject.close()
 
     return data
+
 
 def snapgene_file_to_seqrecord(filepath=None, fileobject=None):
     """Return a BioPython SeqRecord from the data of a ``*.dna`` file.
@@ -219,7 +229,7 @@ def snapgene_file_to_seqrecord(filepath=None, fileobject=None):
                 ),
                 strand=strand_dict[feature['strand']],
                 type=feature['type'],
-                qualifiers= feature['qualifiers']
+                qualifiers=feature['qualifiers']
             )
             for feature in data['features']
         ],
@@ -227,138 +237,155 @@ def snapgene_file_to_seqrecord(filepath=None, fileobject=None):
     )
 
 
-# TODO: PLEASE CLEAN AND DOCUMENT
-
 def snapgene_file_to_gbk(read_file_object, write_file_object):
-    def gs(dic, *args, **kwargs):
+    '''
+    convert a file object
+    '''
+    def analyse_gs(dic, *args, **kwargs):
+        '''extract gs block in the document'''
         if 'default' not in kwargs:
             kwargs['default'] = None
 
-        d = dic
-        for a in args:
-            if a in d:
-                d = d[a]
+        for arg in args:
+            if arg in dic:
+                dic = dic[arg]
             else:
                 return kwargs['default']
-        return d
-    data = snapgene_file_to_dict(fileobject = read_file_object)
-    with open('dst.json', 'w') as jf:
-        jf.write(json.dumps(data,indent=4))
-    w = write_file_object
-    w.write('LOCUS       Exported                7235 bp ds-DNA     {} SYN 15-APR-2012\n'.format(data['dna']['topology']))
-    definition = gs(data, 'notes','Description', default='.').replace('\n', '\n            ')
-    w.write('DEFINITION  {}\n'.format(definition))
-    w.write('ACCESSION   .\n')
-    w.write('VERSION     .\n')
-    w.write('KEYWORDS    {}\n'.format(gs(data, 'notes','CustomMapLabel', default='.')))
-    w.write('SOURCE      .\n')
-    w.write('  ORGANISM  .\n')
+        return dic
 
-    references = gs(data, 'notes', 'References')
+
+    data = snapgene_file_to_dict(fileobject=read_file_object)
+    with open('dst.json', 'w') as jfeature:
+        jfeature.write(json.dumps(data, indent=4))
+    wfo = write_file_object
+    wfo.write(
+        ('LOCUS       Exported                7235 bp ds-DNA     {} SYN \
+15-APR-2012\n').format(data['dna']['topology']))
+    definition = analyse_gs(data, 'notes', 'Description',
+                            default='.').replace('\n', '\n            ')
+    wfo.write('DEFINITION  {}\n'.format(definition))
+    wfo.write('ACCESSION   .\n')
+    wfo.write('VERSION     .\n')
+    wfo.write('KEYWORDS    {}\n'.format(
+        analyse_gs(data, 'notes', 'CustomMapLabel', default='.')))
+    wfo.write('SOURCE      .\n')
+    wfo.write('  ORGANISM  .\n')
+
+    references = analyse_gs(data, 'notes', 'References')
 
     reference_count = 0
     if references:
         for key in references:
             reference_count += 1
             ref = references[key]
-            w.write('REFERENCE   {}  (bases 1 to {} )\n'.format(reference_count, gs(data, 'dna', 'length')))
+            wfo.write('REFERENCE   {}  (bases 1 to {} )\n'.format(
+                reference_count, analyse_gs(data, 'dna', 'length')))
             for key2 in ref:
-                gb_key = key2.replace('@','').upper()
-                w.write('  {}   {}\n'.format(gb_key, ref[key2]))
+                gb_key = key2.replace('@', '').upper()
+                wfo.write('  {}   {}\n'.format(gb_key, ref[key2]))
 
     # generate special reference
     reference_count += 1
-    w.write('REFERENCE   {}  (bases 1 to {} )\n'.format(reference_count, gs(data, 'dna', 'length')))
-    w.write('  AUTHORS   IssacLuo\'s SnapGeneReader\n')
-    w.write('  TITLE     Direct Submission\n')
-    w.write('  JOURNAL   Exported Monday, Nov 20, 2017 from SnapGene File Reader\n            https://github.com/IsaacLuo/SnapGeneFileReader\n')
+    wfo.write('REFERENCE   {}  (bases 1 to {} )\n'.format(
+        reference_count, analyse_gs(data, 'dna', 'length')))
+    wfo.write('  AUTHORS   IssacLuo\'s SnapGeneReader\n')
+    wfo.write('  TITLE     Direct Submission\n')
+    wfo.write(('  JOURNAL   Exported Monday, Nov 20, 2017 from SnapGene File\
+ Reader\n'))
+    wfo.write('            https://github.com/IsaacLuo/SnapGeneFileReader\n')
 
-    w.write('COMMENT     {}\n'.format(gs(data, 'notes', 'Comments', default='.').replace('\n', '\n            ').replace('\\','')))
-    w.write('FEATURES             Location/Qualifiers\n')
+    wfo.write('COMMENT     {}\n'.format(
+        analyse_gs(data, 'notes', 'Comments', default='.').replace(
+            '\n', '\n            ').replace('\\', '')))
+    wfo.write('FEATURES             Location/Qualifiers\n')
 
-    features = gs(data, 'features')
+    features = analyse_gs(data, 'features')
     for feature in features:
-        strand = gs(feature, 'strand', default='')
+        strand = analyse_gs(feature, 'strand', default='')
 
-        segments =  gs(feature, 'segments', default=[])
+        segments = analyse_gs(feature, 'segments', default=[])
         segments = [x for x in segments if x['@type'] == 'standard']
         if len(segments) > 1:
             line = 'join('
             for segment in segments:
-                segment_range = gs(segment, '@range').replace('-','..')
-                if gs(segment, '@type') == 'standard':
+                segment_range = analyse_gs(segment, '@range').replace('-', '..')
+                if analyse_gs(segment, '@type') == 'standard':
                     line += segment_range
                     line += ','
             line = line[:-1] + ')'
         else:
             line = '{}..{}'.format(
-                gs(feature, 'start', default=' '),
-                gs(feature, 'end', default=' ')
+                analyse_gs(feature, 'start', default=' '),
+                analyse_gs(feature, 'end', default=' ')
             )
 
         if strand == '-':
-            w.write('     {} complement({})\n'.format(
-                gs(feature, 'type', default=' ').ljust(15),
+            wfo.write('     {} complement({})\n'.format(
+                analyse_gs(feature, 'type', default=' ').ljust(15),
                 line,
             ))
         else:
-            w.write('     {} {}\n'.format(
-                gs(feature, 'type', default=' ').ljust(15),
+            wfo.write('     {} {}\n'.format(
+                analyse_gs(feature, 'type', default=' ').ljust(15),
                 line,
-                ))
-        strand = gs(feature, 'strand', default='')
+            ))
+        strand = analyse_gs(feature, 'strand', default='')
         # if strand == '-':
-        #     w.write('                     /direction=LEFT\n')
+        #     wfo.write('                     /direction=LEFT\n')
         # name
-        w.write('                     /note="{}"\n'.format(
-            gs(feature, 'name', default='feature')
+        wfo.write('                     /note="{}"\n'.format(
+            analyse_gs(feature, 'name', default='feature')
         ))
         # qualifiers
-        for q_key in gs(feature, 'qualifiers', default={}):
+        for q_key in analyse_gs(feature, 'qualifiers', default={}):
             # do not write label, because it has been written at first.
             if q_key == 'label':
                 pass
             elif q_key == 'note':
-                for note in gs(feature, 'qualifiers', q_key, default=[]):
+                for note in analyse_gs(feature, 'qualifiers', q_key, default=[]):
                     # do note write color, because it will be written later
                     if note[:6] != 'color:':
-                        w.write('                     /note="{}"\n'.format(note))
+                        wfo.write('                     /note="{}"\n'.format(
+                            note))
             else:
-                w.write('                     /{}="{}"\n'.format(
-                    q_key, gs(feature, 'qualifiers', q_key, default='')
+                wfo.write('                     /{}="{}"\n'.format(
+                    q_key, analyse_gs(feature, 'qualifiers', q_key, default='')
                 ))
         if len(segments) > 1:
-            w.write('                     /note="This feature has {} segments:'.format(len(segments)))
-            for seg_i in range(len(segments)):
-                segment_name = gs(segments[seg_i], '@name', default='')
+            wfo.write(('                     /note="This feature \
+has {} segments:').format(len(segments)))
+            for seg_i, seg in enumerate(segments):
+                segment_name = analyse_gs(seg, '@name', default='')
                 if segment_name:
                     segment_name = ' / {}'.format(segment_name)
-                w.write('\n                        {}:  {} / {}{}'.format(
-                        seg_i,
-                        segments[seg_i]['@range'].replace('-',' .. '),
-                        segments[seg_i]['@color'],
-                        segment_name,
+                wfo.write('\n                        {}:  {} / {}{}'.format(
+                    seg_i,
+                    seg['@range'].replace('-', ' .. '),
+                    seg['@color'],
+                    segment_name,
                     )
-                )
-            w.write('"\n')
+                         )
+            wfo.write('"\n')
         else:
             # write colors and direction
-            w.write(21* ' ' + '/note="color: {}'.format(gs(feature, 'color', default='#ffffff')))
+            wfo.write(
+                21 * ' ' + '/note="color: {}'.format(
+                    analyse_gs(feature, 'color', default='#ffffff')))
             if strand == '-':
-                w.write('; direction: LEFT"\n')
-                # w.write('"\n')
+                wfo.write('; direction: LEFT"\n')
+                # wfo.write('"\n')
             elif strand == '+':
-                w.write('; direction: RIGHT"\n')
+                wfo.write('; direction: RIGHT"\n')
             else:
-                w.write('"\n')
+                wfo.write('"\n')
 
     # sequence
-    w.write('ORIGIN\n')
-    seq = gs(data, 'seq')
+    wfo.write('ORIGIN\n')
+    seq = analyse_gs(data, 'seq')
     # devide rows
     for i in range(0, len(seq), 60):
-        w.write(str(i).rjust(9))
-        for j in range(i, min(i+60, len(seq)), 10):
-            w.write(' {}'.format(seq[j:j+10]))
-        w.write('\n')
-    w.write('//\n')
+        wfo.write(str(i).rjust(9))
+        for j in range(i, min(i + 60, len(seq)), 10):
+            wfo.write(' {}'.format(seq[j:j + 10]))
+        wfo.write('\n')
+    wfo.write('//\n')
