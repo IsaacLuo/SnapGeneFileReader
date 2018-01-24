@@ -257,8 +257,8 @@ def snapgene_file_to_gbk(read_file_object, write_file_object):
     data = snapgene_file_to_dict(fileobject=read_file_object)
     wfo = write_file_object
     wfo.write(
-        ('LOCUS       Exported                7235 bp ds-DNA     {} SYN \
-15-APR-2012\n').format(data['dna']['topology']))
+        ('LOCUS       Exported              {0:>6} bp ds-DNA     {1:>8} SYN \
+15-APR-2012\n').format(len(data['seq']), data['dna']['topology']))
     definition = analyse_gs(data, 'notes', 'Description',
                             default='.').replace('\n', '\n            ')
     wfo.write('DEFINITION  {}\n'.format(definition))
