@@ -255,8 +255,6 @@ def snapgene_file_to_gbk(read_file_object, write_file_object):
 
 
     data = snapgene_file_to_dict(fileobject=read_file_object)
-    with open('dst.json', 'w') as jfeature:
-        jfeature.write(json.dumps(data, indent=4))
     wfo = write_file_object
     wfo.write(
         ('LOCUS       Exported                7235 bp ds-DNA     {} SYN \

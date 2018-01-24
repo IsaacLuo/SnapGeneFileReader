@@ -22,7 +22,7 @@ def test_snapgene_file_to_gbk(tmpdir):
         print (fname)
         fpath = os.path.join(TEST_DIR, fname)
         target = os.path.join(str(tmpdir), 'testfile.gbk')
-        with open(fpath, 'r') as fsource:
+        with open(fpath, 'rb') as fsource:
             with open(target, 'w') as ftarget:
                 snapgene_file_to_gbk(fsource, ftarget)
         verification_reparsing = SeqIO.read(target, 'genbank')
