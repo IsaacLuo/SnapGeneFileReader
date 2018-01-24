@@ -12,8 +12,8 @@ def test_snapgene_file_to_seqrecord(tmpdir):
         fpath = os.path.join(TEST_DIR, fname)
         record = snapgene_file_to_seqrecord(fpath)
         assert len(record.seq) > 10
-        with open(os.path.join(str(tmpdir), fname + '.gb'), 'w') as f:
-            SeqIO.write([record, ], f, 'genbank')
+        with open(os.path.join(str(tmpdir), fname + '.gb'), 'w', encoding='utf-8') as fwrite:
+            SeqIO.write([record, ], fwrite, 'genbank')
 
 def test_snapgene_file_to_gbk(tmpdir):
     all_files = [f for f in os.listdir(TEST_DIR) if f.endswith('.dna')]
@@ -23,6 +23,6 @@ def test_snapgene_file_to_gbk(tmpdir):
         fpath = os.path.join(TEST_DIR, fname)
         target = os.path.join(str(tmpdir), 'testfile.gbk')
         with open(fpath, 'rb') as fsource:
-            with open(target, 'w') as ftarget:
+            with open(target, 'w', encoding='utf-8') as ftarget:
                 snapgene_file_to_gbk(fsource, ftarget)
         verification_reparsing = SeqIO.read(target, 'genbank')
