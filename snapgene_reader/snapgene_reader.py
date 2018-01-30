@@ -191,13 +191,8 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
 
         else:
             # WE IGNORE THE WHOLE BLOCK
-            # fileobject.read(block_size)
-            # 2:
-            # 3:
-
-            block = fileobject.read(block_size)
-            print(ord(next_byte), len(block))
-            # data['block_{}'.format(ord(next_byte))] = block
+            fileobject.read(block_size)
+            pass
 
     fileobject.close()
 
