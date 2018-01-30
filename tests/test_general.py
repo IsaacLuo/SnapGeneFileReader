@@ -25,4 +25,4 @@ def test_snapgene_file_to_gbk(tmpdir):
         with open(fpath, 'rb') as fsource:
             with open(target, 'w', encoding='utf-8') as ftarget:
                 snapgene_file_to_gbk(fsource, ftarget)
-        verification_reparsing = SeqIO.read(target, 'genbank')
+        SeqIO.read(target, 'genbank') # verification_reparsing
