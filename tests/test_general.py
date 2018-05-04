@@ -12,7 +12,8 @@ def test_snapgene_file_to_seqrecord(tmpdir):
         fpath = os.path.join(TEST_DIR, fname)
         record = snapgene_file_to_seqrecord(fpath)
         assert len(record.seq) > 10
-        with open(os.path.join(str(tmpdir), fname + '.gb'), 'w', encoding='utf-8') as fwrite:
+        target = os.path.join(str(tmpdir), fname + '.gb')
+        with open(target, 'w', encoding='utf-8') as fwrite:
             SeqIO.write([record, ], fwrite, 'genbank')
 
 def test_snapgene_file_to_gbk(tmpdir):

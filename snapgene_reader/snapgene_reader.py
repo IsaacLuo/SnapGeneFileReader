@@ -22,7 +22,13 @@ def parse(val):
     '''
     parse html
     '''
-    return HTML_PARSER.handle(val).strip() if isinstance(val, str) else val
+    if isinstance(val, str):
+        return (HTML_PARSER.handle(val)
+                .strip()
+                .replace("\n", " ")
+                .replace('"', "'"))
+    else:
+        return val
 
 # def parse(val):
 #     ss = re.sub(r'<br>', '\n', val)
@@ -176,7 +182,7 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
                 parsed_qualifiers['note'].append("color: " + color)
 
                 data["features"].append(dict(
-                    start=min([start for (start, end) in segments_ranges]),
+                    start=min([start - 1 for (start, end) in segments_ranges]),
                     end=max([end for (start, end) in segments_ranges]),
                     strand=strand_dict[feature.get('@directionality', "0")],
                     type=feature['@type'],
