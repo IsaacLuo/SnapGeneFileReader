@@ -19,9 +19,7 @@ HTML_PARSER.single_line_break = True
 
 
 def parse(val):
-    '''
-    parse html
-    '''
+    '''parse html'''
     if isinstance(val, str):
         return (HTML_PARSER.handle(val)
                 .strip()
@@ -37,9 +35,7 @@ def parse(val):
 
 
 def parse_dict(obj):
-    '''
-    parse dict in the obj
-    '''
+    """parse dict in the obj"""
     if isinstance(obj, dict):
         for key in obj:
             if isinstance(obj[key], str):
@@ -59,6 +55,7 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
     fileobject
         On object-like pointing to the data of a .dna file created with
         SnapGene
+
     """
 
     if filepath is not None:
@@ -153,7 +150,9 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
                     qualifiers = [qualifiers]
                 parsed_qualifiers = {}
                 for qualifier in qualifiers:
-                    if isinstance(qualifier['V'], list):
+                    if qualifier['V'] is None:
+                        pass
+                    elif isinstance(qualifier['V'], list):
                         if len(qualifier['V'][0].items()) == 1:
                             parsed_qualifiers[qualifier['@name']] = l_v = []
                             for e_v in qualifier['V']:
@@ -166,7 +165,6 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
                                 (fmt1, value1), (_, value2) = e_v.items()
                                 fmt = format_dict.get(fmt1, parse)
                                 d_v[value2] = fmt(value1)
-
                     else:
                         fmt, value = qualifier['V'].popitem()
                         fmt = format_dict.get(fmt, parse)
