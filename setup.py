@@ -5,9 +5,10 @@ install snapgene_reader by pip
 from setuptools import setup, find_packages
 
 setup(name='snapgene_reader',
-      version='0.1.14',
+      version='0.1.15',
       author='yishaluo',
       author_email='yishaluo@gmail.com',
+      maintainer='Zulko',
       description='Convert Snapgene *.dna files dict/json/biopython.',
       long_description=open('README.rst').read(),
       license='MIT',
