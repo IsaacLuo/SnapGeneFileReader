@@ -17,7 +17,6 @@ HTML_PARSER.ignore_links = True
 HTML_PARSER.body_width = 0
 HTML_PARSER.single_line_break = True
 
-
 def parse(val):
     '''parse html'''
     if isinstance(val, str):
@@ -27,11 +26,6 @@ def parse(val):
                 .replace('"', "'"))
     else:
         return val
-
-# def parse(val):
-#     ss = re.sub(r'<br>', '\n', val)
-#     ss = re.sub(r'<.*?>', '', ss)
-#     return ss
 
 
 def parse_dict(obj):
@@ -73,7 +67,7 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
     title = fileobject.read(8).decode('ascii')
     if length != 14 or title != 'SnapGene':
         raise ValueError('Wrong format for a SnapGene file !')
-
+    
     data = dict(
         isDNA=unpack(2, 'H'),
         exportVersion=unpack(2, 'H'),
@@ -199,7 +193,6 @@ def snapgene_file_to_dict(filepath=None, fileobject=None):
             pass
 
     fileobject.close()
-
     return data
 
 
@@ -232,7 +225,7 @@ def snapgene_file_to_seqrecord(filepath=None, fileobject=None):
             )
             for feature in data['features']
         ],
-        annotations=dict(data['notes'])
+        annotations=dict(topology=data['dna']['topology'], **data['notes'])
     )
 
 
