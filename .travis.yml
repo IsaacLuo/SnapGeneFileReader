@@ -8,3 +8,6 @@ install:
 
 script:
   - python -m pytest -v --cov snapgene_reader --cov-report term-missing
+
+after_success:
+  - coveralls
