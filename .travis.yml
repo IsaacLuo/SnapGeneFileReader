@@ -3,7 +3,8 @@ python:
   - "3.6"
 
 install:
+  - pip install coveralls pytest-cov pytest
   - pip install -e .
 
 script:
-- python -m pytest
+  - python -m pytest -v --cov snapgene_reader --cov-report term-missing
