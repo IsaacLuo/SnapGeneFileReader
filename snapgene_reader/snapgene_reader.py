@@ -12,6 +12,8 @@ from Bio.SeqRecord import SeqRecord
 try:
     # Biopython <1.78
     from Bio.Alphabet import DNAAlphabet
+
+    has_dna_alphabet = True
 except ImportError:
     # Biopython >=1.78
     has_dna_alphabet = False
